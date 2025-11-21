@@ -17,7 +17,7 @@ export function useFetch(query, page) {
         setIsLoading(true);
 
         const res = await fetch(
-          `http://www.omdbapi.com/?apikey=${KEY}&s=${query}&page=${page}`,
+          `https://www.omdbapi.com/?apikey=${KEY}&s=${query}&page=${page}`,
           { signal: controller.signal }
         );
         if (!res.ok) {

@@ -329,7 +329,7 @@ function MovieDetails({
       setIsLoading(true);
       try {
         const res = await fetch(
-          `http://www.omdbapi.com/?apikey=${KEY}&i=${movieId}`
+          `https://www.omdbapi.com/?apikey=${KEY}&i=${movieId}`
         );
         if (!res.ok) {
           throw new Error("Something went wrong with fetching data");
