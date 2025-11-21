@@ -8,6 +8,7 @@ export function useFetch(query, page) {
   const [searchResults, setSearchResults] = useState([]);
   const [numOfResults, setNumOfResults] = useState(0);
 
+  // Then useEffect to fetch movies from OMDB API based on search query and page number
   //   Fetch movies from OMDB API whenever query or page changes
   useEffect(() => {
     const controller = new AbortController();

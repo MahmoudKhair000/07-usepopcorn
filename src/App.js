@@ -1,8 +1,10 @@
-import React from "react";
-import ReactDOM from "react-dom/client";
+// import React from "react";
+// import ReactDOM from "react-dom/client";
 import { useEffect, useState, useRef } from "react";
 import StarRating from "./StarRating";
 import { useFetch } from "./useFetch";
+import { useLocalStorageState } from "./useLocalStorageState";
+import { useKey } from "./useKey";
 
 const KEY = "bf85e984"; // OMDB API key
 
@@ -10,19 +12,18 @@ export default function App() {
   // const tempQuery = "interstellar";
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
-  // Then useEffect to fetch movies from OMDB API based on search query and page number
+  const [selected, setSelected] = useState(null);
+
+  // Custom hook to fetch movie data based on query and page
   const { searchResults, isLoading, error, numOfResults } = useFetch(
     query,
     page
   );
-  const [selected, setSelected] = useState(null);
-  const [watchedMovies, setWatchedMovies] = useState(() => {
-    // Initialize watchedMovies state from local storage
-    // lazy evaluation function
-    // Function Must Be PURE !!, with no arguments, no side efects, and return initial state value
-    const storedMovies = localStorage.getItem("watchedMovies");
-    return JSON.parse(storedMovies) || [];
-  });
+  // Custom hook to manage local storage state for watched movies
+  const [watchedMovies, setWatchedMovies] = useLocalStorageState(
+    "watchedMovies",
+    []
+  );
 
   const addMovieToWatched = (movie) => {
     // Create a new array with the added movie using spread operator
@@ -32,18 +33,6 @@ export default function App() {
   const removeMovieFromWatched = (movieId) => {
     setWatchedMovies((prev) => prev.filter((m) => m.imdbID !== movieId));
   };
-  // Effect to synchronize watchedMovies state with local storage on mount and update on changes
-  useEffect(() => {
-    localStorage.setItem("watchedMovies", JSON.stringify(watchedMovies));
-  }, [watchedMovies]);
-
-  console.log(
-    // Check if React is loaded
-    typeof React !== "undefined", // Should be true
-    typeof ReactDOM !== "undefined", // Should be true
-
-    React.version // Should return version number
-  );
 
   // Finally, the main return of the App component
   return (
@@ -129,6 +118,13 @@ function SearchBar({ query, setQuery, setPage }) {
     inputRef.current.focus();
   }, []);
 
+  function handleFocus() {
+    if (document.activeElement === inputRef.current) return;
+    inputRef.current.focus();
+    setQuery("");
+  }
+  useKey("Enter", handleFocus);
+
   useEffect(
     function () {
       function callbackFunc(e) {
@@ -188,28 +184,7 @@ function BoxList({ children }) {
     </div>
   );
 }
-// Search Results
-// function SearchMovieList({ movies }) {
-//   const [isOpen1, setIsOpen1] = useState(true);
 
-//   return (
-//     <div className="box">
-//       <button
-//         className="btn-toggle"
-//         onClick={() => setIsOpen1((open) => !open)}
-//       >
-//         {isOpen1 ? "▲" : "▼"}
-//       </button>
-//       {isOpen1 && (
-//         <ul className="list">
-//           {movies?.map((movie) => (
-//             <SearchResult key={movie.imdbID} movie={movie} />
-//           ))}
-//         </ul>
-//       )}
-//     </div>
-//   );
-// }
 function SearchResult({ result, selected, setSelected }) {
   return (
     <li
@@ -238,31 +213,6 @@ function SearchResult({ result, selected, setSelected }) {
     </li>
   );
 }
-// Library Box
-// function WatchedMovieList({ watched }) {
-//   const [isOpen2, setIsOpen2] = useState(true);
-
-//   return (
-//     <div className="box">
-//       <button
-//         className="btn-toggle"
-//         onClick={() => setIsOpen2((isOpen) => !isOpen)}
-//       >
-//         {isOpen2 ? "▲" : "▼"}
-//       </button>
-//       <Summary watched={watched} />
-//       {isOpen2 && (
-//         <>
-//           <ul className="list">
-//             {watched.map((movie) => (
-//               <WatchedMovie key={movie.imdbID} watched={movie} />
-//             ))}
-//           </ul>
-//         </>
-//       )}
-//     </div>
-//   );
-// }
 
 function Summary({ watched: watchedMovies }) {
   // average reduce function
@@ -311,6 +261,14 @@ function WatchedMovie({ watched: movie, setSelected, removeMovieFromWatched }) {
       <img src={movie.Poster} alt={`${movie.Title} poster`} />
       <h3>{movie.Title}</h3>
       <div>
+        <p>
+          <span>
+            {movie.Type === "movie" && "🎬"}
+            {movie.Type === "series" && "📺"}
+            {movie.Type === "game" && "🎮"}
+          </span>
+          <span>{movie.Type}</span>
+        </p>
         <p>
           <span>⭐️</span>
           <span>{movie.imdbRating}</span>
@@ -387,6 +345,7 @@ function MovieDetails({
 
         setMovie({
           Title: data.Title,
+          Type: data.Type,
           releaseDate: data.Released,
           genre: data.Genre,
           Poster: data.Poster,
@@ -427,19 +386,20 @@ function MovieDetails({
     }, 10);
   }, [imdbRating]);
 
-  useEffect(() => {
-    function escCallback(e) {
-      if (e.code === "Escape") {
-        onCloseMovie();
-        // console.log("Closing...");
-      }
-    }
-    document.addEventListener("keydown", escCallback);
+  useKey("Escape", onCloseMovie);
+  // useEffect(() => {
+  //   function escCallback(e) {
+  //     if (e.code === "Escape") {
+  //       onCloseMovie();
+  //       // console.log("Closing...");
+  //     }
+  //   }
+  //   document.addEventListener("keydown", escCallback);
 
-    return function () {
-      document.removeEventListener("keydown", escCallback);
-    };
-  }, [onCloseMovie]);
+  //   return function () {
+  //     document.removeEventListener("keydown", escCallback);
+  //   };
+  // }, [onCloseMovie]);
 
   return (
     <div className="details">
@@ -557,7 +517,6 @@ function ErrorMessage({ message }) {
 
 /* **************************Start Pagination************************** */
 // Start result page pagination
-
 function Pagination({ numOfResults, page, setPage }) {
   const ulRef = useRef(null);
   // Pagination settings
@@ -631,4 +590,4 @@ function Pagination({ numOfResults, page, setPage }) {
     </div>
   );
 }
-/* **************************Start Pagination************************** */
+/* ***************************End Pagination*************************** */
