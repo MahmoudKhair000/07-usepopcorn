@@ -17,12 +17,12 @@ export default function App() {
   // Custom hook to fetch movie data based on query and page
   const { searchResults, isLoading, error, numOfResults } = useFetch(
     query,
-    page
+    page,
   );
   // Custom hook to manage local storage state for watched movies
   const [watchedMovies, setWatchedMovies] = useLocalStorageState(
     "watchedMovies",
-    []
+    [],
   );
 
   const addMovieToWatched = (movie) => {
@@ -138,7 +138,7 @@ function SearchBar({ query, setQuery, setPage }) {
       document.addEventListener("keydown", callbackFunc);
       return () => document.removeEventListener("keydown", callbackFunc);
     },
-    [setQuery]
+    [setQuery],
   );
 
   async function handleSearch(e) {
@@ -321,7 +321,7 @@ function MovieDetails({
         };
       });
     },
-    [userRating]
+    [userRating],
   );
 
   useEffect(() => {
@@ -330,7 +330,7 @@ function MovieDetails({
       try {
         const res = await fetch(
           // it has to be https to prevent deploying service from blocking it
-          `https://www.omdbapi.com/?apikey=${KEY}&i=${movieId}`
+          `https://www.omdbapi.com/?apikey=${KEY}&i=${movieId}`,
         );
         if (!res.ok) {
           throw new Error("Something went wrong with fetching data");
