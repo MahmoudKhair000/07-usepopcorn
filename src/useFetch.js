@@ -17,6 +17,7 @@ export function useFetch(query, page) {
         setIsLoading(true);
 
         const res = await fetch(
+          // it has to be https to prevent deploying service from blocking it
           `https://www.omdbapi.com/?apikey=${KEY}&s=${query}&page=${page}`,
           { signal: controller.signal }
         );

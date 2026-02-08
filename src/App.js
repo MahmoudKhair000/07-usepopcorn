@@ -329,6 +329,7 @@ function MovieDetails({
       setIsLoading(true);
       try {
         const res = await fetch(
+          // it has to be https to prevent deploying service from blocking it
           `https://www.omdbapi.com/?apikey=${KEY}&i=${movieId}`
         );
         if (!res.ok) {
